@@ -72,6 +72,3 @@ def defrag_url(url: str) -> str:
     parsed_url = urlparse(url)
     defragged_url = urlunparse(parsed_url._replace(fragment=""))
     return defragged_url
-
-
-

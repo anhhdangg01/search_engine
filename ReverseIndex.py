@@ -140,9 +140,5 @@ def test_one_folder():
 
 
 if __name__ == "__main__":
-<<<<<<< Updated upstream
-    initialize_Reverse_Index_Process()
-=======
     test_one_folder()
     #initialize_Reverse_Index_Process()
->>>>>>> Stashed changes
