@@ -1,5 +1,6 @@
 import os
 import json
+import helper_functions as hf
 
 
 def create_Index_TOC(indexes):
@@ -124,6 +125,24 @@ def initialize_Reverse_Index_Process():
                         print(f"Error decoding JSON in file: {file_path}")
     '''
 
+# EASY TEST METHOD
+def test_one_folder():
+    curdir = os.getcwd()
+    target = os.path.join(curdir, "DEV", "aiclub_ics_uci_edu")
+    if os.path.exists(target) and os.path.isdir(target):
+        for file in os.listdir(target):
+            if file.endswith(".json"):
+                path = os.path.join(target, file)
+                with open(path, "r") as jsonf:
+                    data = json.load(jsonf)
+                    text = hf.extract_text(data)
+
+
 
 if __name__ == "__main__":
+<<<<<<< Updated upstream
     initialize_Reverse_Index_Process()
+=======
+    test_one_folder()
+    #initialize_Reverse_Index_Process()
+>>>>>>> Stashed changes
