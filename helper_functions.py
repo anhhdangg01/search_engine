@@ -45,7 +45,7 @@ def tokenizer(text: str) -> defaultdict:
         - not a stop word
         - not less than 3 chars
     """
-    tokens = defaultdict()
+    tokens = defaultdict(int)
     token_string = ""
     prev_char = ""
     for char in text:
