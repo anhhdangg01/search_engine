@@ -44,25 +44,32 @@ def IndexAppendORUpdate(DocumentID, tokens):
         Index = get_Index(tuple_Entry[0])        #check through the list of tokens in the file.
     
         if (len(Index) != 0):
+            totalFreq = 0
             #it exists, update it.
                 #If updating, no need to update the index. 
-            Token_Entry = {}
-            Token_Entry[str(DocumentID)] = tuple_Entry[1]
+
+
+            Token_Entry = [str(DocumentID), tuple_Entry[1]]
             Index[str(tuple_Entry[0])].append(Token_Entry)
+            Index[str(tuple_Entry[0])][0][1] += tuple_Entry[1]
 
             for key, value in Index.items():
-                Index[key] = sorted(value, key=lambda x: list(x.values())[0], reverse=True)                #sort it with the highest frequency first. 
-            
+                Index[key] = sorted(value, key=lambda x: list(x), reverse=True)   #This sorts by file ID. 
+
             with open("ReverseIndex.txt", "a") as file:
                 file.write(json.dumps(Index)+"\n")
+
+
 
         else:
             #Append it.
             #If appending. Update the index. 
 
-            Token_Entry = {}
-            Token_Entry[DocumentID] = tuple_Entry[1]
-            Index[tuple_Entry[0]] = [(Token_Entry)]
+            Token_Entry = [str(DocumentID), tuple_Entry[1]]
+            TotalFreq_Entry = ["Total", tuple_Entry[1]]
+            Index[tuple_Entry[0]] = [TotalFreq_Entry, Token_Entry]
+
+
 
             with open("ReverseIndex.txt", "a") as file:
                 file.write(json.dumps(Index)+"\n")
@@ -72,7 +79,7 @@ def IndexAppendORUpdate(DocumentID, tokens):
 
 def initialize_Reverse_Index_Process():
     DocumentID = 1
-    tokens = [("TEST1", 12),("AAAAA",3),("AAAAA",38),("AAAAA",25)] #SAMPLE CALL
+    tokens = [("TEST1", 12),("AAAAA",3),("AAAAA",38),("AAAAA",25),("TEST5", 12)] #SAMPLE CALL
     #tokens = [] #remove this comment
 
     #CALL SIMILARTY FUNCTION HERE:
@@ -82,7 +89,7 @@ def initialize_Reverse_Index_Process():
     IndexAppendORUpdate(DocumentID, tokens)#SAMPLE CALL
     DocumentID+=1#SAMPLE CALL
 
-    Archieve_URL("TESTLINK2.com", DocumentID)#SAMPLE CALL
+    Archieve_URL("TESTLINK2.com", DocumentID)#SAMPLE CAL
     IndexAppendORUpdate(DocumentID, tokens)#SAMPLE CALL
     DocumentID+=1#SAMPLE CALL
 
@@ -93,7 +100,7 @@ def initialize_Reverse_Index_Process():
     for root, _, files in os.walk(""):
         for file in files:
             if file.endswith('.json'):
-                file_path = oos.path.join(root,file)
+                file_path = os.path.join(root,file)
 
                 with open(file_path,'r') as f:
                     try:
