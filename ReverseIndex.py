@@ -214,6 +214,21 @@ def initialize_Reverse_Index_Process():
     recursiveMerge() #:( SAD CODE RIGHT HERE <-
     #GTOC.group_reverse_index()
 
+# TEST METHOD
+def test_one_folder():
+    curdir = os.getcwd()
+    target = os.path.join(curdir, "DEV", "aiclub_ics_uci_edu")
+    if os.path.exists(target) and os.path.isdir(target):
+        for file in os.listdir(target):
+            if file.endswith(".json"):
+                path = os.path.join(target, file)
+                with open(path, "r") as jsonf:
+                    data = json.load(jsonf)
+                    text = hf.extract_text(data)
+                    token_dict = hf.tokenizer(text)
+                    print(token_dict)
+                    print()
 
 if __name__ == "__main__":
-    initialize_Reverse_Index_Process()
+    test_one_folder()
+    #initialize_Reverse_Index_Process()
