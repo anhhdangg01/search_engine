@@ -1,7 +1,12 @@
 import os
 import json
+import groupingTOC as GTOC
 import helper_functions as hf
+from collections import defaultdict
+import ast
 
+numTempFile = 0 
+tempIndex = {}
 
 def create_Index_TOC(indexes):
     with open("ReverseIndex.txt", "rw") as file:
@@ -37,10 +42,47 @@ def get_Index(token):
             lineNum+=1
     return {}
 
-def IndexAppendORUpdate(DocumentID, tokens):
-    #indexes = {}
-    #get_index_TOC(indexes)
+def CreateIndex(DocumentID, tokens):
+    global numTempFile
+    global tempIndex
+    
 
+    for tuple_Entry in tokens:
+        if(len(tempIndex) <= 50):
+            #add it into the curr temp list
+            
+            if(str(tuple_Entry[0]) in tempIndex):
+                #update the index
+
+                Token_Entry = [str(DocumentID), tuple_Entry[1]]
+                tempIndex[tuple_Entry[0]].append(Token_Entry)
+
+            else:
+                Token_Entry = [str(DocumentID), tuple_Entry[1]]
+                tempIndex[str(tuple_Entry[0])] = [Token_Entry]
+
+        else:
+            #dump content into a temp file. 
+            tempIndex = dict(sorted(tempIndex.items()))
+            with open(os.getcwd() + "/TempFiles/"+ str(numTempFile) + ".txt", "a") as file:
+                for token,value in tempIndex.items():
+                    file.write(token+":["+(','.join(map(str, value)))+"]\n")
+            numTempFile+=1
+            tempIndex = {}
+
+    if(len(tempIndex)!=0):
+        tempIndex = dict(sorted(tempIndex.items()))
+        with open(os.getcwd() + "/TempFiles/"+ str(numTempFile) + ".txt", "a") as file:
+            for token,value in tempIndex.items():
+                file.write(token+":["+(','.join(map(str, value)))+"]\n")
+        numTempFile+=1
+        tempIndex = {}
+
+
+
+
+
+    '''
     for tuple_Entry in tokens:
         Index = get_Index(tuple_Entry[0])        #check through the list of tokens in the file.
     
@@ -74,31 +116,77 @@ def IndexAppendORUpdate(DocumentID, tokens):
 
             with open("ReverseIndex.txt", "a") as file:
                 file.write(json.dumps(Index)+"\n")
+    '''
+
+def recursiveMerge():
+    global numTempFile
+    tempWorkingDir = os.getcwd() + "/TempFiles/"
+    mergeListPath = tempWorkingDir + "MergedList.txt"
+    temp_file_path = tempWorkingDir + "temp_MergedList.txt"
+
+    for i in range (0, numTempFile):
+        currMergeItmPath = tempWorkingDir + str(i) #add + ".txt" back to run it on openlab.
+        print("CURR READING: " + currMergeItmPath)
+        
+    
+        with open (currMergeItmPath, 'r') as targetmerge, open (mergeListPath, 'r') as CoaleasedFile, open(temp_file_path, 'w') as temp_file:
+            
+            
+            mergeItm = targetmerge.readline().strip()
+            coaleasedItm = CoaleasedFile.readline().strip()
+        
+            while mergeItm or coaleasedItm:
+                if not mergeItm:
+                    temp_file.write(coaleasedItm+"\n")
+                    coaleasedItm = CoaleasedFile.readline().strip()
+                elif not coaleasedItm:
+                    temp_file.write(mergeItm+"\n")
+                    mergeItm = targetmerge.readline().strip()
+                else:
+
+                    key1,value1 = mergeItm.split(":",1)
+                    key2,value2 = coaleasedItm.split(":",1)
+
+                    if key1 < key2:
+                        temp_file.write(mergeItm + '\n')
+                        mergeItm = targetmerge.readline().strip()
+                    elif key1 > key2:
+                        temp_file.write(coaleasedItm + '\n')
+                        coaleasedItm = CoaleasedFile.readline().strip()
+                    else:
+
+                        
+                        list1 = ast.literal_eval(value1)
+                        list2 = ast.literal_eval(value2)
+
+                        merged_value = list1 + list2
+
+                        
+                        temp_file.write(f"{key1}:{merged_value}\n")
+
+                        mergeItm = targetmerge.readline().strip()
+                        coaleasedItm = CoaleasedFile.readline().strip()
+
+            
+            os.replace(temp_file_path, mergeListPath)
+
+
 
 
 
 
 def initialize_Reverse_Index_Process():
     DocumentID = 1
-    tokens = [("TEST1", 12),("AAAAA",3),("AAAAA",38),("AAAAA",25),("TEST5", 12)] #SAMPLE CALL
-    #tokens = [] #remove this comment
+    tokens = [] #remove this comment
 
     #CALL SIMILARTY FUNCTION HERE:
-    #IF SIMILAR continue. 
-
-    Archieve_URL("TESTLINK.com", DocumentID)#SAMPLE CALL
-    IndexAppendORUpdate(DocumentID, tokens)#SAMPLE CALL
-    DocumentID+=1#SAMPLE CALL
-
-    Archieve_URL("TESTLINK2.com", DocumentID)#SAMPLE CAL
-    IndexAppendORUpdate(DocumentID, tokens)#SAMPLE CALL
-    DocumentID+=1#SAMPLE CALL
+        #IF SIMILAR continue. 
 
 
+    dir_path = os.getcwd() + "/Dev"
 
-    #remove this block comment and delete the sample calls when the tokenize function is implemented. 
-    '''
-    for root, _, files in os.walk(""):
+    
+    for root, _, files in os.walk(dir_path):
         for file in files:
             if file.endswith('.json'):
                 file_path = os.path.join(root,file)
@@ -110,35 +198,22 @@ def initialize_Reverse_Index_Process():
 
                         #tokenize data here.
 
-                        tokens = [("TEST1", 12),("AAAAA",3)]
+                        tokens = hf.tokenizer(hf.extract_text(data))
 
                         #CALL SIMILARTY FUNCTION HERE:
                             #IF SIMILAR continue. 
-
+                        
                         Archieve_URL(url, DocumentID)
-                        IndexAppendORUpdate(DocumentID, tokens)
+                        CreateIndex(DocumentID, list(tokens.items()))
                         DocumentID+=1
-
-
-
                     except json.JSONDecodeError:
                         print(f"Error decoding JSON in file: {file_path}")
-    '''
 
-# EASY TEST METHOD
-def test_one_folder():
-    curdir = os.getcwd()
-    target = os.path.join(curdir, "DEV", "aiclub_ics_uci_edu")
-    if os.path.exists(target) and os.path.isdir(target):
-        for file in os.listdir(target):
-            if file.endswith(".json"):
-                path = os.path.join(target, file)
-                with open(path, "r") as jsonf:
-                    data = json.load(jsonf)
-                    text = hf.extract_text(data)
 
+    
+    recursiveMerge() #:( SAD CODE RIGHT HERE <-
+    GTOC.group_reverse_index()
 
 
 if __name__ == "__main__":
-    test_one_folder()
-    #initialize_Reverse_Index_Process()
+    initialize_Reverse_Index_Process()
