@@ -17,6 +17,14 @@ stop_words = [
     "through", "to", "too", "under", "until", "up", "very", "was", "wasn", "we", "what", "when", "where", "which",
     "while", "who", "whom", "why", "with", "won", "would", "wouldn", "you", "your", "yours", "yourself", "yourselves"
 ]
+prefixes = [
+    "a", "bi", "anti", "counter", "de", "dis", "extra", "fore", "in", "inter", "mal", "mis", "neo", "non", "over", "pre", 
+    "post", "proto", "re", "sub", "tele", "trans", "tri", "un", "uni"
+]
+suffixes = [
+    "able", "ant", "athon", "cide", "dom", "er", "ery", "ess", "esque", "ette", "fest", "fy", "hood", "ible", "ish", 
+    "ism", "ist", "less", "ly", "ous", "wash"
+]
 
 # HELPERS FUNCTIONS
 def extract_text(jsondict: dict) -> str:
@@ -60,10 +68,25 @@ def tokenizer(text: str) -> defaultdict:
                 prev_char = char
                 continue
             else:
+                token_string = stemmer(token_string)
                 tokens[token_string] += 1
             token_string = ""
         prev_char = char
     return tokens
+
+def stemmer(text: str) -> str:
+    """
+    Takes in a string of text and removes any prefixes/suffixes. Returns the string in its base form.
+    It will not parse words if removing any suffixes/prefixes makes it too short.
+    """
+    new_word = text
+    for prefix in prefixes:
+        if (text.startswith(prefix) and (text.removeprefix(prefix) >= 5)):
+            new_word = new_word.removeprefix(prefix)
+    for suffix in suffixes:
+        if (text.endswith(suffix) and (text.removesuffix(prefix) >= 5)):
+            new_word = new_word.removesuffix(suffix)
+    return new_word
 
 def defrag_url(url: str) -> str:
     """
