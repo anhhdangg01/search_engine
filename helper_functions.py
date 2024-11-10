@@ -81,10 +81,10 @@ def stemmer(text: str) -> str:
     """
     new_word = text
     for prefix in prefixes:
-        if (text.startswith(prefix) and (text.removeprefix(prefix) >= 5)):
+        if (text.startswith(prefix) and (len(text.removeprefix(prefix)) >= 5)):
             new_word = new_word.removeprefix(prefix)
     for suffix in suffixes:
-        if (text.endswith(suffix) and (text.removesuffix(prefix) >= 5)):
+        if (text.endswith(suffix) and (len(text.removesuffix(prefix)) >= 5)):
             new_word = new_word.removesuffix(suffix)
     return new_word
 
