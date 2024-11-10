@@ -5,7 +5,7 @@ import helper_functions as hf
 from collections import defaultdict
 import ast
 
-numTempFile = 0 
+numTempFile = 0
 tempIndex = {}
 
 def create_Index_TOC(indexes):
@@ -125,7 +125,7 @@ def recursiveMerge():
     temp_file_path = tempWorkingDir + "temp_MergedList.txt"
 
     for i in range (0, numTempFile):
-        currMergeItmPath = tempWorkingDir + str(i) #add + ".txt" back to run it on openlab.
+        currMergeItmPath = tempWorkingDir + str(i) + ".txt" #back to run it on openlab.
         print("CURR READING: " + currMergeItmPath)
         
     
@@ -183,7 +183,7 @@ def initialize_Reverse_Index_Process():
         #IF SIMILAR continue. 
 
 
-    dir_path = os.getcwd() + "/Dev"
+    dir_path = os.getcwd() + "/Sites"
 
     
     for root, _, files in os.walk(dir_path):
@@ -212,7 +212,7 @@ def initialize_Reverse_Index_Process():
 
     
     recursiveMerge() #:( SAD CODE RIGHT HERE <-
-    GTOC.group_reverse_index()
+    #GTOC.group_reverse_index()
 
 
 if __name__ == "__main__":
