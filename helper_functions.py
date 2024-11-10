@@ -3,9 +3,20 @@ import re
 from urllib.parse import urlparse, urlunparse
 from bs4 import BeautifulSoup as bs
 from collections import defaultdict
-from math import log
 
 # VARIABLES
+stop_words = [
+    "a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any", "are", "aren", "t", "as", "at",
+    "be", "because", "been", "before", "being", "below", "between", "both", "but", "by", "can", "not", "cannot", "could",
+    "couldn", "did", "didn", "do", "does", "doesn", "doing", "don", "down", "during", "each", "few", "for", "from",
+    "further", "had", "hadn", "has", "hasn", "have", "haven", "having", "he", "d", "ll", "s", "her", "here", "hers",
+    "herself", "him", "himself", "his", "how", "i", "if", "in", "into", "is", "isn", "it", "its", "itself", "let", "me",
+    "more", "most", "mustn", "my", "myself", "no", "nor", "of", "off", "on", "once", "only", "or", "other", "ought",
+    "our", "ours", "ourselves", "out", "over", "own", "same", "shan", "she", "should", "shouldn", "so", "some", "such",
+    "than", "that", "the", "their", "theirs", "them", "themselves", "then", "there", "these", "they", "this", "those",
+    "through", "to", "too", "under", "until", "up", "very", "was", "wasn", "we", "what", "when", "where", "which",
+    "while", "who", "whom", "why", "with", "won", "would", "wouldn", "you", "your", "yours", "yourself", "yourselves"
+]
 prefixes = [
     "a", "bi", "anti", "counter", "de", "dis", "extra", "fore", "in", "inter", "mal", "mis", "neo", "non", "over", "pre", 
     "post", "proto", "re", "sub", "tele", "trans", "tri", "un", "uni"
@@ -42,50 +53,25 @@ def tokenizer(text: str) -> defaultdict:
         - not a stop word
         - not less than 3 chars
     """
-    tokens = defaultdict(list)
-    token_start = None
-    token_end = None
+    tokens = defaultdict(int)
     token_string = ""
     prev_char = ""
-    for i, char in enumerate(text):
+    for char in text:
         if alphanumeric_check(char):
             token_string += char
-            if token_start == None:
-                token_start = i
         elif alphanumeric_check(prev_char) == False and alphanumeric_check(char) == False:
             continue
         else:
             token_string = token_string.lower()
-            token_end = i
-            if (len(token_string) < 3):
+            if (token_string in stop_words) or (len(token_string) < 3):
                 token_string = ""
                 prev_char = char
-                token_start = None
-                token_end = None
                 continue
             else:
                 token_string = stemmer(token_string)
-                if len(tokens[token_string]) == 0: #when it's empty
-                    tokens[token_string].append(1) #[0]
-                    tokens[token_string].append([]) #[1]
-                    tokens[token_string][1].append(tuple([token_start, token_end])) 
-                else:
-                    tokens[token_string][1].append(tuple([token_start, token_end]))
-                    tokens[token_string][0] += 1
-            token_string = "" #reset
-            token_start = None
-            token_end = None
-        prev_char = char 
-
-    if (token_string != "") and (len(token_string) >= 3):
-        token_string = stemmer(token_string)
-        if len(tokens[token_string]) == 0: #when it's empty
-            tokens[token_string].append(1) #[0]
-            tokens[token_string].append([]) #[1]
-            tokens[token_string][1].append(tuple([token_start, token_end])) 
-        else:
-            tokens[token_string][1].append(tuple([token_start, token_end]))
-            tokens[token_string][0] += 1
+                tokens[token_string] += 1
+            token_string = ""
+        prev_char = char
     return tokens
 
 def stemmer(text: str) -> str:
@@ -109,16 +95,3 @@ def defrag_url(url: str) -> str:
     parsed_url = urlparse(url)
     defragged_url = urlunparse(parsed_url._replace(fragment=""))
     return defragged_url
-
-def tfidf(freq: int, docfreq: int) -> float:
-    """
-    Weight formula for TF-IDF:
-    w(x,y) = tf(x,y) * log(N/df(x))
-        - tf(x,y) = freq of x in y
-        - df(x) = # of documents containing x
-        - N = total # of documents
-    """
-    # TODO: NEED to REFACTOR for actual use
-    n = input("input for # of docs") # TODO: <== N is the total number of documents
-    temp = n/docfreq
-    return round(freq * log(temp), 2)
