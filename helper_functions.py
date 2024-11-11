@@ -5,18 +5,6 @@ from bs4 import BeautifulSoup as bs
 from collections import defaultdict
 
 # VARIABLES
-stop_words = [
-    "a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any", "are", "aren", "t", "as", "at",
-    "be", "because", "been", "before", "being", "below", "between", "both", "but", "by", "can", "not", "cannot", "could",
-    "couldn", "did", "didn", "do", "does", "doesn", "doing", "don", "down", "during", "each", "few", "for", "from",
-    "further", "had", "hadn", "has", "hasn", "have", "haven", "having", "he", "d", "ll", "s", "her", "here", "hers",
-    "herself", "him", "himself", "his", "how", "i", "if", "in", "into", "is", "isn", "it", "its", "itself", "let", "me",
-    "more", "most", "mustn", "my", "myself", "no", "nor", "of", "off", "on", "once", "only", "or", "other", "ought",
-    "our", "ours", "ourselves", "out", "over", "own", "same", "shan", "she", "should", "shouldn", "so", "some", "such",
-    "than", "that", "the", "their", "theirs", "them", "themselves", "then", "there", "these", "they", "this", "those",
-    "through", "to", "too", "under", "until", "up", "very", "was", "wasn", "we", "what", "when", "where", "which",
-    "while", "who", "whom", "why", "with", "won", "would", "wouldn", "you", "your", "yours", "yourself", "yourselves"
-]
 prefixes = [
     "a", "bi", "anti", "counter", "de", "dis", "extra", "fore", "in", "inter", "mal", "mis", "neo", "non", "over", "pre", 
     "post", "proto", "re", "sub", "tele", "trans", "tri", "un", "uni"
@@ -50,7 +38,6 @@ def tokenizer(text: str) -> defaultdict:
     Takes in a string of text and tokenizes alphanumeric words. Returns a dictionary of the tokens and its frequency.
     A token is...
         - is alphanumeric
-        - not a stop word
         - not less than 3 chars
     """
     tokens = defaultdict(int)
@@ -63,7 +50,7 @@ def tokenizer(text: str) -> defaultdict:
             continue
         else:
             token_string = token_string.lower()
-            if (token_string in stop_words) or (len(token_string) < 3):
+            if (len(token_string) < 3):
                 token_string = ""
                 prev_char = char
                 continue
