@@ -324,9 +324,11 @@ def test_one_folder():
                 path = os.path.join(target, file)
                 with open(path, "r") as jsonf:
                     data = json.load(jsonf)
-                    text = hf.extract_text(data)
-                    token_dict = hf.tokenizer(text)
+                    x = hf.extract_tokenize_fields(data)
+                    #text = hf.extract_text(data)
+                    #token_dict = hf.tokenizer(text)
 
                     
 if __name__ == "__main__":
+    #test_one_folder
     initialize_Reverse_Index_Process()

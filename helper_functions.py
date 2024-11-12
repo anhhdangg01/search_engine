@@ -3,6 +3,7 @@ import re
 from urllib.parse import urlparse, urlunparse
 from bs4 import BeautifulSoup as bs
 from collections import defaultdict
+from math import log
 
 # VARIABLES
 prefixes = [
@@ -13,17 +14,15 @@ suffixes = [
     "able", "ant", "athon", "cide", "dom", "er", "ery", "ess", "esque", "ette", "fest", "fy", "hood", "ible", "ish", 
     "ism", "ist", "less", "ly", "ous", "wash"
 ]
+htmltags = [
+    "title", "p", "h1", "h2", "h3", "h4", "h5", "h6", "strong", "em", "li", "td", "th"
+]
+punctuation_table = {
+    ord("!"): None, ord("'"): None, ord(","): None, ord("-"): None, ord("."): None, 
+    ord(":"): None, ord(";"): None, ord("?"): None, ord("_"): None, ord("`"): None
+}
 
 # HELPERS FUNCTIONS
-def extract_text(jsondict: dict) -> str:
-    """
-    Extracts HTML structured dictionary
-    """
-    html = bs(str(jsondict["content"]), "html.parser")
-    text = (html.get_text()).replace("\\t"," ").replace("\\n"," ").replace("\\x"," ").replace("\\d"," ").replace("\\r"," ")
-    text = re.sub(r'\s+', ' ', text).strip()
-    return text
-
 def alphanumeric_check(char: str) -> bool:
     """
     Checks whether or not the char is an alphanumeric character. Used in the tokenizer function.
@@ -32,38 +31,6 @@ def alphanumeric_check(char: str) -> bool:
     if char.lower() not in an:
         return False
     return True
-
-def tokenizer(text: str) -> defaultdict:
-    """
-    Takes in a string of text and tokenizes alphanumeric words. Returns a dictionary of the tokens and its frequency.
-    A token is...
-        - is alphanumeric
-        - not less than 3 chars
-    """
-    tokens = defaultdict(int)
-    token_string = ""
-    prev_char = ""
-    for char in text:
-        if alphanumeric_check(char):
-            token_string += char
-        elif alphanumeric_check(prev_char) == False and alphanumeric_check(char) == False:
-            continue
-        else:
-            token_string = token_string.lower()
-            if (len(token_string) < 3):
-                token_string = ""
-                prev_char = char
-                continue
-            else:
-                token_string = stemmer(token_string)
-                tokens[token_string] += 1
-            token_string = ""
-        prev_char = char
-    if (token_string != "") and (len(token_string) >= 3):
-        token_string = stemmer(token_string)
-        tokens[token_string] += 1
-
-    return tokens
 
 def stemmer(text: str) -> str:
     """
@@ -99,3 +66,46 @@ def tfidf(freq: int, docfreq: int) -> float:
     n = input("input for # of docs") # TODO: <== N is the total number of documents
     temp = n/docfreq
     return round(freq * log(temp), 2)
+
+def extract_tokenize_fields(jsondict: dict) -> defaultdict:
+    """
+    An updated version tokenizer that also extracts text. This tokenizer will also record the fields of each token.
+
+    Data in the dictionary(k:v):
+        token <str> : [freq <int>, {field <str>, ..., n} <set>]<list>
+    """
+    tokens = defaultdict(list)
+    html = bs(str(jsondict["content"]), "html.parser")
+    for e in html.find_all(htmltags):
+        tag = e.name
+        text = (e.get_text()).replace("\\t"," ").replace("\\n"," ").replace("\\x"," ").replace("\\d"," ").replace("\\r"," ")
+        words = text.split()
+        for word in words:
+            word = word.translate(punctuation_table)
+            if not is_valid_token(word):
+                continue
+            word = word.lower()
+            #word = stemmer(word)
+            if len(tokens[word]) == 0:
+                tokens[word].append(1)
+                tokens[word].append(set())
+                tokens[word][1].add(tag)
+            else:
+                tokens[word][0] += 1
+                tokens[word][1].add(tag)
+    return tokens
+
+def is_valid_token(token: str) -> bool:
+    """
+    Checks whether the string provided is a valid token:
+        - is alphanumeric_check
+        - 
+    """
+    if len(token) < 3:
+        return False
+    for char in token:
+        if alphanumeric_check(char):
+            continue
+        else:
+            return False
+    return True
