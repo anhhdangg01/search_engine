@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from collections import defaultdict
 
 def group_reverse_index (inputFile = "ReverseIndex.txt"):
@@ -53,8 +54,7 @@ def build_toc (inputFile = "GroupedReverse.txt"):
             for line in inputFile:
                 lineIndex += 1
 
-                element = json.loads(line.strip())
-                token = list(element.keys())[0]
+                token = line.split(':')[0]
                 tokenLetter = token[0].lower()
 
                 if tokenLetter != currLetter:
