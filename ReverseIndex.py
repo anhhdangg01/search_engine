@@ -4,6 +4,7 @@ import groupingTOC as GTOC
 import helper_functions as hf
 from collections import defaultdict
 import ast
+from bs4 import BeautifulSoup
 
 numTempFile = 0
 tempIndex = {}
@@ -48,7 +49,7 @@ def CreateIndex(DocumentID, tokens):
     
 
     for tuple_Entry in tokens:
-        if(len(tempIndex) <= 50):
+        if(len(tempIndex) <= 10000):
             #add it into the curr temp list
             
             if(str(tuple_Entry[0]) in tempIndex):
@@ -62,6 +63,16 @@ def CreateIndex(DocumentID, tokens):
                 tempIndex[str(tuple_Entry[0])] = [Token_Entry]
 
         else:
+            if(str(tuple_Entry[0]) in tempIndex):
+                #update the index
+
+                Token_Entry = [str(DocumentID), tuple_Entry[1]]
+                tempIndex[tuple_Entry[0]].append(Token_Entry)
+
+            else:
+                Token_Entry = [str(DocumentID), tuple_Entry[1]]
+                tempIndex[str(tuple_Entry[0])] = [Token_Entry]
+                
             #dump content into a temp file. 
             tempIndex = dict(sorted(tempIndex.items()))
             with open(os.getcwd() + "/TempFiles/"+ str(numTempFile) + ".txt", "a") as file:
@@ -70,13 +81,7 @@ def CreateIndex(DocumentID, tokens):
             numTempFile+=1
             tempIndex = {}
 
-    if(len(tempIndex)!=0):
-        tempIndex = dict(sorted(tempIndex.items()))
-        with open(os.getcwd() + "/TempFiles/"+ str(numTempFile) + ".txt", "a") as file:
-            for token,value in tempIndex.items():
-                file.write(token+":["+(','.join(map(str, value)))+"]\n")
-        numTempFile+=1
-        tempIndex = {}
+
 
 
 
@@ -117,7 +122,7 @@ def CreateIndex(DocumentID, tokens):
             with open("ReverseIndex.txt", "a") as file:
                 file.write(json.dumps(Index)+"\n")
     '''
-
+'''
 def recursiveMerge():
     global numTempFile
     tempWorkingDir = os.getcwd() + "/TempFiles/"
@@ -126,8 +131,12 @@ def recursiveMerge():
 
     for i in range (0, numTempFile):
         currMergeItmPath = tempWorkingDir + str(i) + ".txt" #back to run it on openlab.
-        print("CURR READING: " + currMergeItmPath)
-        
+        if(i % 1000 == 0):
+            print("CURR MERGING")
+            print(currMergeItmPath)
+            print(" out of ")
+            print(numTempFile)
+    
     
         with open (currMergeItmPath, 'r') as targetmerge, open (mergeListPath, 'r') as CoaleasedFile, open(temp_file_path, 'w') as temp_file:
             
@@ -170,12 +179,95 @@ def recursiveMerge():
             
             os.replace(temp_file_path, mergeListPath)
 
+'''
+
+def countTokens():
+    tempWorkingDir = os.getcwd() + "/TempFiles/"
+    mergeListPath = tempWorkingDir + "MergedList.txt"
+
+    NumberofUniqueTokens = 0
+
+    with open (mergeListPath, 'r') as CoaleasedFile:
+        for line in CoaleasedFile:
+            NumberofUniqueTokens+=1
+
+    with open (tempWorkingDir + "TotalUniqueTokens.txt", 'w') as TotalTokenCount:
+        TotalTokenCount.write("Total Number of Unique Tokens: " + str(NumberofUniqueTokens))
 
 
+def merge_two_files(file1_path, file2_path, output_path):
+    """Helper function to merge two sorted files into one."""
+    with open(file1_path, 'r') as file1, open(file2_path, 'r') as file2, open(output_path, 'w') as output_file:
+        line1 = file1.readline().strip()
+        line2 = file2.readline().strip()
 
+        while line1 or line2:
+            if not line1:
+                output_file.write(line2 + "\n")
+                line2 = file2.readline().strip()
+            elif not line2:
+                output_file.write(line1 + "\n")
+                line1 = file1.readline().strip()
+            else:
+                key1, value1 = line1.split(":", 1)
+                key2, value2 = line2.split(":", 1)
+
+                if key1 < key2:
+                    output_file.write(line1 + '\n')
+                    line1 = file1.readline().strip()
+                elif key1 > key2:
+                    output_file.write(line2 + '\n')
+                    line2 = file2.readline().strip()
+                else:
+                    list1 = ast.literal_eval(value1)
+                    list2 = ast.literal_eval(value2)
+                    merged_value = list1 + list2
+                    output_file.write(f"{key1}:{merged_value}\n")
+                    line1 = file1.readline().strip()
+                    line2 = file2.readline().strip()
+
+
+def merge_files_iteratively(numTempFile):
+    tempWorkingDir = os.getcwd() + "/TempFiles/"
+    
+    # Initial list of files to merge
+    files_to_merge = [tempWorkingDir + f"{i}.txt" for i in range(numTempFile)]
+    merge_round = 1
+
+    while len(files_to_merge) > 1:
+        print(f"Merging Round {merge_round}: {len(files_to_merge)} files to merge.")
+        new_files = []
+
+        # Process files in pairs
+        for i in range(0, len(files_to_merge), 2):
+            file1 = files_to_merge[i]
+            
+            if i + 1 < len(files_to_merge):
+                file2 = files_to_merge[i + 1]
+                merged_file_path = tempWorkingDir + f"merged_{merge_round}_{i // 2}.txt"
+                merge_two_files(file1, file2, merged_file_path)
+                new_files.append(merged_file_path)
+                
+                # Optionally delete intermediate files
+                os.remove(file1)
+                os.remove(file2)
+            else:
+                # If there's an odd file out, carry it to the next round
+                new_files.append(file1)
+
+        # Update the list of files to merge in the next round
+        files_to_merge = new_files
+        merge_round += 1
+
+    # The last remaining file is the fully merged output
+    final_merged_file = files_to_merge[0]
+    print(f"Final merged file: {final_merged_file}")
+    os.rename(final_merged_file, tempWorkingDir + "MergedList.txt")
 
 
 def initialize_Reverse_Index_Process():
+    global tempIndex
+    global numTempFile
     DocumentID = 1
     tokens = [] #remove this comment
 
@@ -195,10 +287,8 @@ def initialize_Reverse_Index_Process():
                     try:
                         data = json.load(f)
                         url = data.get("url")
-
-                        #tokenize data here.
-
-                        tokens = hf.tokenizer(hf.extract_text(data))
+                        text = hf.extract_text(data)
+                        tokens = hf.tokenizer(text)  #NOTE, ONLY TEXTS ARE PASSED IN, ADD IT SO THAT IT ALSO ACCOUNTS FOR TAGS AS WELL.
 
                         #CALL SIMILARTY FUNCTION HERE:
                             #IF SIMILAR continue. 
@@ -209,12 +299,22 @@ def initialize_Reverse_Index_Process():
                     except json.JSONDecodeError:
                         print(f"Error decoding JSON in file: {file_path}")
 
+    if(len(tempIndex)!=0):
+        tempIndex = dict(sorted(tempIndex.items()))
+        with open(os.getcwd() + "/TempFiles/"+ str(numTempFile) + ".txt", "a") as file:
+            for token,value in tempIndex.items():
+                file.write(token+":["+(','.join(map(str, value)))+"]\n")
+        numTempFile+=1
+        tempIndex = {}
+
 
     
-    recursiveMerge() #:( SAD CODE RIGHT HERE <-
+    merge_files_iteratively(numTempFile)
+    countTokens()
+    #recursiveMerge() #:( SAD CODE RIGHT HERE <-
     #GTOC.group_reverse_index()
 
-# Test method
+	
 def test_one_folder():
     curdir = os.getcwd()
     target = os.path.join(curdir, "DEV", "aiclub_ics_uci_edu")
@@ -227,6 +327,6 @@ def test_one_folder():
                     text = hf.extract_text(data)
                     token_dict = hf.tokenizer(text)
 
+                    
 if __name__ == "__main__":
-    #test_one_folder()
     initialize_Reverse_Index_Process()
