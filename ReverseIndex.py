@@ -84,103 +84,6 @@ def CreateIndex(DocumentID, tokens):
 
 
 
-
-
-
-    '''
-    for tuple_Entry in tokens:
-        Index = get_Index(tuple_Entry[0])        #check through the list of tokens in the file.
-    
-        if (len(Index) != 0):
-            totalFreq = 0
-            #it exists, update it.
-                #If updating, no need to update the index. 
-
-
-            Token_Entry = [str(DocumentID), tuple_Entry[1]]
-            Index[str(tuple_Entry[0])].append(Token_Entry)
-            Index[str(tuple_Entry[0])][0][1] += tuple_Entry[1]
-
-            for key, value in Index.items():
-                Index[key] = sorted(value, key=lambda x: list(x), reverse=True)   #This sorts by file ID. 
-
-            with open("ReverseIndex.txt", "a") as file:
-                file.write(json.dumps(Index)+"\n")
-
-
-
-        else:
-            #Append it.
-            #If appending. Update the index. 
-
-            Token_Entry = [str(DocumentID), tuple_Entry[1]]
-            TotalFreq_Entry = ["Total", tuple_Entry[1]]
-            Index[tuple_Entry[0]] = [TotalFreq_Entry, Token_Entry]
-
-
-
-            with open("ReverseIndex.txt", "a") as file:
-                file.write(json.dumps(Index)+"\n")
-    '''
-'''
-def recursiveMerge():
-    global numTempFile
-    tempWorkingDir = os.getcwd() + "/TempFiles/"
-    mergeListPath = tempWorkingDir + "MergedList.txt"
-    temp_file_path = tempWorkingDir + "temp_MergedList.txt"
-
-    for i in range (0, numTempFile):
-        currMergeItmPath = tempWorkingDir + str(i) + ".txt" #back to run it on openlab.
-        if(i % 1000 == 0):
-            print("CURR MERGING")
-            print(currMergeItmPath)
-            print(" out of ")
-            print(numTempFile)
-    
-    
-        with open (currMergeItmPath, 'r') as targetmerge, open (mergeListPath, 'r') as CoaleasedFile, open(temp_file_path, 'w') as temp_file:
-            
-            
-            mergeItm = targetmerge.readline().strip()
-            coaleasedItm = CoaleasedFile.readline().strip()
-        
-            while mergeItm or coaleasedItm:
-                if not mergeItm:
-                    temp_file.write(coaleasedItm+"\n")
-                    coaleasedItm = CoaleasedFile.readline().strip()
-                elif not coaleasedItm:
-                    temp_file.write(mergeItm+"\n")
-                    mergeItm = targetmerge.readline().strip()
-                else:
-
-                    key1,value1 = mergeItm.split(":",1)
-                    key2,value2 = coaleasedItm.split(":",1)
-
-                    if key1 < key2:
-                        temp_file.write(mergeItm + '\n')
-                        mergeItm = targetmerge.readline().strip()
-                    elif key1 > key2:
-                        temp_file.write(coaleasedItm + '\n')
-                        coaleasedItm = CoaleasedFile.readline().strip()
-                    else:
-
-                        
-                        list1 = ast.literal_eval(value1)
-                        list2 = ast.literal_eval(value2)
-
-                        merged_value = list1 + list2
-
-                        
-                        temp_file.write(f"{key1}:{merged_value}\n")
-
-                        mergeItm = targetmerge.readline().strip()
-                        coaleasedItm = CoaleasedFile.readline().strip()
-
-            
-            os.replace(temp_file_path, mergeListPath)
-
-'''
-
 def countTokens():
     tempWorkingDir = os.getcwd() + "/TempFiles/"
     mergeListPath = tempWorkingDir + "MergedList.txt"
@@ -286,15 +189,15 @@ def initialize_Reverse_Index_Process():
                 with open(file_path,'r') as f:
                     try:
                         data = json.load(f)
-                        url = data.get("url")
-                        text = hf.extract_text(data)
-                        tokens = hf.tokenizer(text)  #NOTE, ONLY TEXTS ARE PASSED IN, ADD IT SO THAT IT ALSO ACCOUNTS FOR TAGS AS WELL.
+                        url = hf.defrag_url(data.get("url"))
+                        tokens = hf.extract_tokenize_fields(data)
 
                         #CALL SIMILARTY FUNCTION HERE:
                             #IF SIMILAR continue. 
                         
                         Archieve_URL(url, DocumentID)
                         CreateIndex(DocumentID, list(tokens.items()))
+
                         DocumentID+=1
                     except json.JSONDecodeError:
                         print(f"Error decoding JSON in file: {file_path}")
@@ -313,8 +216,8 @@ def initialize_Reverse_Index_Process():
     countTokens()
     #recursiveMerge() #:( SAD CODE RIGHT HERE <-
     #GTOC.group_reverse_index()
-
-	
+    
+    GTOC.build_toc(os.getcwd() + "/TempFiles/MergedList.txt")
 def test_one_folder():
     curdir = os.getcwd()
     target = os.path.join(curdir, "DEV", "aiclub_ics_uci_edu")
