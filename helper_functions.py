@@ -158,7 +158,7 @@ def extract_tokenize_fields(jsondict: dict) -> defaultdict:
             if not is_valid_token(word):
                 continue
             word = word.lower()
-            #word = stemmer(word)
+            word = porter_stemmer(word)
             if len(tokens[word]) == 0:
                 tokens[word].append(1)
                 tokens[word].append(set())
