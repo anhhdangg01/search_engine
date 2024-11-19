@@ -9,6 +9,42 @@ from bs4 import BeautifulSoup
 numTempFile = 0
 tempIndex = {}
 
+def countNumofDoc():
+    sol = 0
+    with open("URL_Collective.txt") as file:
+        for line in file:
+            sol+=1
+
+    return sol
+
+
+def buildTF_IDF(totalNumDoc):
+    with open(os.getcwd() + "/TempFiles/MergedList.txt",'r') as PreProcessedList, open("ReverseIndex.txt",'w') as ReverseIndex:
+            wordlist = PreProcessedList.readline().strip()
+            while(wordlist):
+                key, value = wordlist.split(":", 1)
+                postingsList = ast.literal_eval(value)
+                numDoc = len(postingsList)
+                postPostingsList = []
+
+                for freq in postingsList:
+
+                    
+                    tf_idfScore = hf.tfidf(int(freq[1][0]),numDoc,totalNumDoc)
+                    freq[1][0] = tf_idfScore
+                    postPostingsList.append(freq)
+
+
+
+                #print(postPostingsList)
+                ReverseIndex.write(f"{key}:{postPostingsList}\n")
+                wordlist = PreProcessedList.readline()
+
+                
+
+            
+
+
 def create_Index_TOC(indexes):
     with open("ReverseIndex.txt", "rw") as file:
         raw_Index = file.readline.strip()
@@ -49,7 +85,7 @@ def CreateIndex(DocumentID, tokens):
     
 
     for tuple_Entry in tokens:
-        if(len(tempIndex) <= 10000):
+        if(len(tempIndex) <= 50):
             #add it into the curr temp list
             
             if(str(tuple_Entry[0]) in tempIndex):
@@ -180,7 +216,7 @@ def initialize_Reverse_Index_Process():
 
     dir_path = os.getcwd() + "/Sites"
 
-    
+    '''
     for root, _, files in os.walk(dir_path):
         for file in files:
             if file.endswith('.json'):
@@ -218,6 +254,13 @@ def initialize_Reverse_Index_Process():
     #GTOC.group_reverse_index()
     
     GTOC.build_toc(os.getcwd() + "/TempFiles/MergedList.txt")
+    '''
+    totalNumDoc = countNumofDoc()
+    buildTF_IDF(totalNumDoc)
+
+
+
+
 def test_one_folder():
     curdir = os.getcwd()
     target = os.path.join(curdir, "DEV", "aiclub_ics_uci_edu")
