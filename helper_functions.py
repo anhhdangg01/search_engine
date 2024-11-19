@@ -127,18 +127,22 @@ def defrag_url(url: str) -> str:
     defragged_url = urlunparse(parsed_url._replace(fragment=""))
     return defragged_url
 
-def tfidf(freq: int, docfreq: int) -> float:
+def tfidf(freq: int, docfreq: int, docnum: int) -> float:
     """
     Weight formula for TF-IDF:
-    w(x,y) = tf(x,y) * log(N/df(x))
+    w(x,y) = (1 + log(tf(x,y))) * log(N/df(x))
+        - log is base 10
         - tf(x,y) = freq of x in y
         - df(x) = # of documents containing x
         - N = total # of documents
     """
-    # TODO: NEED to REFACTOR for actual use
-    n = input("input for # of docs") # TODO: <== N is the total number of documents
-    temp = n/docfreq
-    return round(freq * log(temp), 2)
+    n = docnum
+    if freq > 0:
+        tf = 1 + log(freq, 10)
+    else:
+        tf = 0
+    idf = log((n/docfreq), 10)
+    return round(tf * idf, 2)
 
 def extract_tokenize_fields(jsondict: dict) -> defaultdict:
     """
