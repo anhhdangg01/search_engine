@@ -26,23 +26,14 @@ def buildTF_IDF(totalNumDoc):
                 postingsList = ast.literal_eval(value)
                 numDoc = len(postingsList)
                 postPostingsList = []
-
-                for freq in postingsList:
-
-                    
+                for freq in postingsList:     
                     tf_idfScore = hf.tfidf(int(freq[1][0]),numDoc,totalNumDoc)
                     freq[1][0] = tf_idfScore
                     postPostingsList.append(freq)
 
-
-
                 #print(postPostingsList)
                 ReverseIndex.write(f"{key}:{postPostingsList}\n")
                 wordlist = PreProcessedList.readline()
-
-                
-
-            
 
 
 def create_Index_TOC(indexes):
