@@ -3,6 +3,8 @@ import os
 import re
 from collections import defaultdict
 
+#
+'''
 def group_reverse_index (inputFile = "ReverseIndex.txt"):
     # grouped token list
     #groupedIndex = defaultdict(list)
@@ -41,8 +43,9 @@ def group_reverse_index (inputFile = "ReverseIndex.txt"):
     os.rmdir('TOC')
 
 group_reverse_index()
+'''
 
-def build_toc (inputFile = "GroupedReverse.txt"):
+def build_toc (inputFile):
     
     currLetter = ''
     startLine = -1
@@ -67,4 +70,24 @@ def build_toc (inputFile = "GroupedReverse.txt"):
             if currLetter != '':
                 outputFile.write(f'"{currLetter}": [{startLine}, {lineIndex}]\n')
 
-build_toc()
+
+def find_toc_range(token):
+
+    findLetter = token[0].lower()
+    inputFile = "TableOfContents.txt"
+    startLine = None
+    endLine = None
+
+    with open(inputFile, 'r') as toc:
+        for line in toc:
+            # Check each line for the corresponding first letter
+            if line.strip().startswith(f'"{findLetter}":'):
+                # Strip down toc formats to get start and ending range
+                rangeString = line.split(':')[1].strip().strip('[]')
+                rangeSplit = range_str.split(',')
+                startLine = int(rangeSplit[0])
+                endLine = int(rangeSplit[1])
+                break
+    
+    # Return start and end lines as a list for easy use
+    return [startLine, endLine]
