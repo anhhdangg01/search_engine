@@ -10,6 +10,13 @@ numTempFile = 0
 tempIndex = {}
 
 def countNumofDoc():
+    '''
+    Returns the number of urls processed by the tool.
+
+    input:
+    output:
+        returns: int -> number of urls processed by the tool.
+    '''
     sol = 0
     with open("URL_Collective.txt") as file:
         for line in file:
@@ -19,6 +26,16 @@ def countNumofDoc():
 
 
 def buildTF_IDF(totalNumDoc):
+
+    '''
+    
+    This iterates through the MergedList (proto-reverse-index based on frequency) and calculates the TF-IDF score.
+    Then it replaces the frequency count with the TF-IDF and builds a new list, named ReverseIndex.txt.
+
+    input:
+        totalNumDoc: int -> number of urls that has been processed.
+    output:
+    '''
     with open(os.getcwd() + "/TempFiles/MergedList.txt",'r') as PreProcessedList, open("ReverseIndex.txt",'w') as ReverseIndex:
             wordlist = PreProcessedList.readline().strip()
             while(wordlist):
@@ -26,37 +43,39 @@ def buildTF_IDF(totalNumDoc):
                 postingsList = ast.literal_eval(value)
                 numDoc = len(postingsList)
                 postPostingsList = []
-
-                for freq in postingsList:
-
-                    
+                for freq in postingsList:     
                     tf_idfScore = hf.tfidf(int(freq[1][0]),numDoc,totalNumDoc)
                     freq[1][0] = tf_idfScore
                     postPostingsList.append(freq)
 
-
-
                 #print(postPostingsList)
                 ReverseIndex.write(f"{key}:{postPostingsList}\n")
                 wordlist = PreProcessedList.readline()
-
-                
-
-            
-
-
-def create_Index_TOC(indexes):
-    with open("ReverseIndex.txt", "rw") as file:
-        raw_Index = file.readline.strip()
-        indexes = json.loads(raw_Index)
     
 
 def Archieve_URL(url, DocumentID):
+    '''
+    This appends the URL to URL_Collective.txt.
+    It creates a history of the processed URL. 
+
+    input:
+        url: string -> a url link
+        DocumentID: int -> the corresponding document ID. (Row number of the URL in the URL_Collective.txt)
+    output:
+    '''
     with open("URL_Collective.txt", "a") as file:
         file.write(url+"\n")
 
 
 def clear_line_in_file(file_path, line_to_clear):
+    '''
+    (Depreciated) replaces the original file with a copy of the original file with edits. 
+
+    input:
+        file_path: string -> file path to the MergedList.txt file.
+        line_to_clear: int -> row number that has been edited. 
+    output:
+    '''
     temp_file_path = 'temp_' + file_path
     with open(file_path, 'r') as original_file, open(temp_file_path, 'w') as temp_file:
         for current_line_number, line in enumerate(original_file):
@@ -68,6 +87,14 @@ def clear_line_in_file(file_path, line_to_clear):
 
 
 def get_Index(token):
+    '''
+    (Depreciated) gets the row that contains postings in the temp reverse index given a token. 
+    input:
+        token: string -> file path to the MergedList.txt file.
+    output:
+        returns {"token":[ [DocID [Frequency, [extended list]]]]}
+            {} otherwise. 
+    '''
     lineNum = 0
     with open("ReverseIndex.txt", "r") as file:
         for line in file:
@@ -80,6 +107,16 @@ def get_Index(token):
     return {}
 
 def CreateIndex(DocumentID, tokens):
+    '''
+    Given a document ID and tokens, it will iterate through the tokens and append them to the tempIndex.
+    If the length of the temp index exceeds length of 50, it will offload it to a temporary partial index. 
+    Upon termination, it will offload the rest of the tempIndex into a temporary partial index.
+
+    input:
+        DocumentID: string -> The document id assigned to the URL that is currently being processed. 
+        Tokens: list of (processed) tokens and their frequency in the current document.  
+    output:
+    '''
     global numTempFile
     global tempIndex
     
@@ -121,6 +158,13 @@ def CreateIndex(DocumentID, tokens):
 
 
 def countTokens():
+    '''
+    Returns the number of unique tokens in the MergedList.txt file (i.e combination of all partial reverse indexes.)
+    
+    input:
+    output:
+        returns: int -> total number of unique tokens. 
+    '''
     tempWorkingDir = os.getcwd() + "/TempFiles/"
     mergeListPath = tempWorkingDir + "MergedList.txt"
 
@@ -135,7 +179,15 @@ def countTokens():
 
 
 def merge_two_files(file1_path, file2_path, output_path):
-    """Helper function to merge two sorted files into one."""
+    '''
+    Helper function to merge two sorted files into one.
+    input:
+        file1_path: string -> path to the first file to be merged.
+        file1_path: string -> path to the second file to be merged. 
+        output_path: string -> path to output the merged file. 
+    output:
+        
+    '''
     with open(file1_path, 'r') as file1, open(file2_path, 'r') as file2, open(output_path, 'w') as output_file:
         line1 = file1.readline().strip()
         line2 = file2.readline().strip()
@@ -167,6 +219,13 @@ def merge_two_files(file1_path, file2_path, output_path):
 
 
 def merge_files_iteratively(numTempFile):
+    '''
+    Given a list of temporary partial indexes, it pairs them in a alternating pattern and merges them.
+    This technique lowers the number of comparisons needed to merge all of the files. 
+    input:
+        numTempFile: int -> number of temporary partial reverse index that has been generated.
+    output:
+    '''
     tempWorkingDir = os.getcwd() + "/TempFiles/"
     
     # Initial list of files to merge
@@ -205,6 +264,15 @@ def merge_files_iteratively(numTempFile):
 
 
 def initialize_Reverse_Index_Process():
+    '''
+    Main function. Recursively gets all files from the "Sites" folder and tokenizes them before inserting it into the reverse index.
+    
+    Afterward, it will calculate the TF-IDF using "MergedList.txt" (i.e a combination of all partial reverse indexes.) and output a final
+    reverse index, "ReverseIndex.txt".
+
+    input:
+    output:
+    '''
     global tempIndex
     global numTempFile
     DocumentID = 1
