@@ -35,7 +35,8 @@ if __name__ == '__main__':
 
 
 
-    img = Image.open(r"C:\Users\skydo\Pictures\Screenshot 2024-11-18 201722.png")
+    img = Image.open(os.getcwd() + "\\web-search-engine_8346083.png")
+    img = img.resize((100, 100))
     img_tk = ImageTk.PhotoImage(img)
     label = tk.Label(back_frame,bg="#2c2e30", text="Loading image...")
     label.grid(row=0,column=0,sticky="nsew",pady=(10,0))
