@@ -275,7 +275,7 @@ def initialize_Reverse_Index_Process():
     input:
     output:
     '''
-       global tempIndex
+    global tempIndex
     global numTempFile
     DocumentID = 0
     tokens = [] #remove this comment
