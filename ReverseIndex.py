@@ -264,6 +264,18 @@ def merge_files_iteratively(numTempFile):
     print(f"Final merged file: {final_merged_file}")
     os.rename(final_merged_file, tempWorkingDir + "MergedList.txt")
 
+def categorizeReverseIndexEntries():
+    '''
+    This opens the ReverseIndex.txt (the final merged reverse index) and put the entries into a separate file based on the first letter of the token.
+    input:
+    output:
+    '''
+    with open("ReverseIndex.txt",'r') as RI:
+        for line in RI:
+            token = (line.split(':'))[0]
+            with open(os.getcwd() + "/ReverseIndexes/" + token[0]+".txt",'a') as SplitIndex:
+                SplitIndex.write(line)
+
 
 def initialize_Reverse_Index_Process():
     '''
@@ -283,7 +295,7 @@ def initialize_Reverse_Index_Process():
     #CALL SIMILARTY FUNCTION HERE:
         #IF SIMILAR continue. 
 
-    
+    '''
     dir_path = os.getcwd() + "/Sites"
     for root, _, files in os.walk(dir_path):
         for file in files:
@@ -326,6 +338,8 @@ def initialize_Reverse_Index_Process():
     
     totalNumDoc = countNumofDoc()
     buildTF_IDF(totalNumDoc)
+    '''
+    categorizeReverseIndexEntries()
     
 
 
