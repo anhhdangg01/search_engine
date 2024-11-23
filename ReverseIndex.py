@@ -63,8 +63,10 @@ def Archieve_URL(url, DocumentID):
         DocumentID: int -> the corresponding document ID. (Row number of the URL in the URL_Collective.txt)
     output:
     '''
-    with open("URL_Collective.txt", "a") as file:
-        file.write(url+"\n")
+    with open("URL_Collective.txt", "ab") as file:
+        DocID = file.tell()
+        file.write((url+"\n").encode('utf-8'))
+        return DocID
 
 
 def clear_line_in_file(file_path, line_to_clear):
@@ -273,18 +275,16 @@ def initialize_Reverse_Index_Process():
     input:
     output:
     '''
-    global tempIndex
+       global tempIndex
     global numTempFile
-    DocumentID = 1
+    DocumentID = 0
     tokens = [] #remove this comment
 
     #CALL SIMILARTY FUNCTION HERE:
         #IF SIMILAR continue. 
 
-
+    
     dir_path = os.getcwd() + "/Sites"
-
-    '''
     for root, _, files in os.walk(dir_path):
         for file in files:
             if file.endswith('.json'):
@@ -299,10 +299,9 @@ def initialize_Reverse_Index_Process():
                         #CALL SIMILARTY FUNCTION HERE:
                             #IF SIMILAR continue. 
                         
-                        Archieve_URL(url, DocumentID)
+                        DocumentID = Archieve_URL(url)
                         CreateIndex(DocumentID, list(tokens.items()))
 
-                        DocumentID+=1
                     except json.JSONDecodeError:
                         print(f"Error decoding JSON in file: {file_path}")
 
@@ -321,10 +320,13 @@ def initialize_Reverse_Index_Process():
     #recursiveMerge() #:( SAD CODE RIGHT HERE <-
     #GTOC.group_reverse_index()
     
+    
     GTOC.build_toc(os.getcwd() + "/TempFiles/MergedList.txt")
-    '''
+
+    
     totalNumDoc = countNumofDoc()
     buildTF_IDF(totalNumDoc)
+    
 
 
 
