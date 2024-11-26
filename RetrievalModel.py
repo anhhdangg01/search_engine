@@ -24,8 +24,40 @@ stop_words = [
     ]
 
 # MAIN FUNCTIONS
-def process_query(query: str):
 
+
+
+def intersect_sorted_lists(list1, list2): #NEW
+    i, j = 0, 0
+    merged_result = []
+
+    while i < len(list1) and j < len(list2):
+        key1, value1 = list1[i]
+        key2, value2 = list2[j]
+
+        if int(key1) < int(key2):
+            # If key1 is smaller, move pointer i
+            i += 1
+        elif int(key1) > int(key2):
+            # If key2 is smaller, move pointer j
+            j += 1
+        else:
+            # Keys match: sum numeric values and merge sets
+            merged_value = [
+                value1[0] + value2[0],  # Sum numeric values
+                value1[1].union(value2[1])  # Merge the sets
+            ]
+            merged_result.append([key1, merged_value])
+            i += 1
+            j += 1
+
+    return merged_result
+
+
+
+
+def process_query(query: str): #NEW
+    start_time = time.time()
     """
     Uses the given AND boolean query in order to search for the top 5 related URLs.
     Returns a list of the top URLs.
@@ -45,61 +77,72 @@ def process_query(query: str):
         if t in stop_words:
             continue
         tokens.append(t)
-    print(tokens)
-
-    tempDocIDs = []
+    #print(tokens)
+    
+    listOlists = []
     
     for token in tokens:
+        start_time1 = time.time()
         tokenPostings = retrieve_tokenPostings(token)
-        doc_ids = getDocIDs(tokenPostings)
-        tempDocIDs.append(doc_ids)
+        end_time2 = time.time()
+        print(f"Time taken by retrieve_tokenPostings: {end_time2 - start_time1} seconds")
 
-    finalDocIDs = tempDocIDs[0]
-    if len(tempDocIDs) > 1:
-        for doc_ids in tempDocIDs[1:]:
-            finalDocIDs = merge_two_doc(finalDocIDs, doc_ids)
-            if not finalDocIDs:
-                break
 
-    finalDocURLs = getURLs(finalDocIDs)
+        if(tokenPostings!=[]):
+            listOlists.append(tokenPostings)
 
-    return finalDocURLs
+    start_timemerge = time.time()
 
-# HELPER FUNCTIONS
-def retrieve_tokenPostings(token):
-    #tokenRange = GTOC.find_toc_range(token)
+    listOlists.sort(key=len,reverse=True)
+    #print("LEN OF LIST: " + str(len(listOlists)))
+    #print("\n\n\n".join(str(sublist) for sublist in listOlists))
 
-    with open("ReverseIndex.txt", 'r') as reverseIndex:
-        for fileLine in reverseIndex:
 
-            fileLine = fileLine.strip()
-            currToken = fileLine.split(':')[0].strip()
 
-            if token == currToken:
-                # Safely evaluate the postings string
-                postings = fileLine.split(':')[1].strip()
-                return ast.literal_eval(postings)
+    if(len(listOlists)>0):
+        mergedList = listOlists[-1]
+        listOlists.pop()
 
-    return []  # Return an empty list if token is not found in the reverse index
+        #print("LEN OF LIST: " + str(len(listOlists)))
 
-def getURLs(idList):
+        for list in reversed(listOlists):
+            mergedList = intersect_sorted_lists(mergedList,list)
+            #print("LEN OF mergedList: " + str(len(mergedList)))
+
+        #print("LEN OF FINAL MergedList: " + str(len(mergedList)))
+
+
+        sorted_data = sorted(mergedList, key=lambda x: x[1][0], reverse=True)#THIS SORTS THE LIST BASED ON CUMLULITIVE TF-IDF
+        first_5_keys=[item[0] for item in sorted_data[:min(5, len(sorted_data))]] #GET THE FIRST 5 DOCID on the list, or less if there are less entries. 
+        
+        #print("LEN OF FINAL sorted_data: " + str(len(sorted_data)))
+        #print("FIRST 5 KEYS: ")
+        #print(first_5_keys)
+
+
+        end_timemerge = time.time()
+        print(f"Time taken by merge: {end_timemerge - start_timemerge} seconds")
+        end_time = time.time()
+        print(f"Total Time taken: {end_time - start_time} seconds")
+        return getURLs(first_5_keys)
+        
+
+    else:
+        return[]
+
+
+def getURLs(idList): #NEW
     '''
     Input: Document ID list
     Output: URL list corresponding to docIDs
     '''
     urls = []
-    idListCopy = idList[:]
-    with open("URL_Collective.txt", "r") as url_collection:
-        row = 0
-        for line in url_collection:
-            row += 1
-            for id in idListCopy:  # A COPY
-                if row == int(id):
-                    urls.append(line.strip())
-                    idList.remove(id)
-            if len(idList) == 0:
-                break
-    return urls
+    with open("URL_Collective.txt", "rb") as url_collection:
+        for offset in idList:
+            url_collection.seek(int(offset), 0)
+            urls.append(url_collection.readline())
+    return URLs
+
 
 def getDocIDs(postings):
     """
