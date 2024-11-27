@@ -53,7 +53,7 @@ def buildTF_IDF(totalNumDoc):
                 wordlist = PreProcessedList.readline()
     
 
-def Archieve_URL(url, DocumentID):
+def Archieve_URL(url):
     '''
     This appends the URL to URL_Collective.txt.
     It creates a history of the processed URL. 
@@ -295,7 +295,6 @@ def initialize_Reverse_Index_Process():
     #CALL SIMILARTY FUNCTION HERE:
         #IF SIMILAR continue. 
 
-    
     dir_path = os.getcwd() + "/Sites"
     for root, _, files in os.walk(dir_path):
         for file in files:
@@ -338,7 +337,6 @@ def initialize_Reverse_Index_Process():
     
     totalNumDoc = countNumofDoc()
     buildTF_IDF(totalNumDoc)
-    
     categorizeReverseIndexEntries()
     
 

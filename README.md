@@ -1,2 +1,2 @@
 # a3_index_constructor
-#I'm sad:(
+# Make sure to pip install pillow so the search interface can work!
