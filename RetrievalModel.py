@@ -4,6 +4,8 @@ import json
 import groupingTOC as GTOC
 import ast
 import helper_functions as hf
+import time
+import datetime
 
 # VARIABLES
 stop_words = [
@@ -24,38 +26,6 @@ stop_words = [
     ]
 
 # MAIN FUNCTIONS
-
-
-
-def intersect_sorted_lists(list1, list2): #NEW
-    i, j = 0, 0
-    merged_result = []
-
-    while i < len(list1) and j < len(list2):
-        key1, value1 = list1[i]
-        key2, value2 = list2[j]
-
-        if int(key1) < int(key2):
-            # If key1 is smaller, move pointer i
-            i += 1
-        elif int(key1) > int(key2):
-            # If key2 is smaller, move pointer j
-            j += 1
-        else:
-            # Keys match: sum numeric values and merge sets
-            merged_value = [
-                value1[0] + value2[0],  # Sum numeric values
-                value1[1].union(value2[1])  # Merge the sets
-            ]
-            merged_result.append([key1, merged_value])
-            i += 1
-            j += 1
-
-    return merged_result
-
-
-
-
 def process_query(query: str): #NEW
     start_time = time.time()
     """
@@ -131,6 +101,50 @@ def process_query(query: str): #NEW
         return[]
 
 
+
+def intersect_sorted_lists(list1, list2): #NEW
+    i, j = 0, 0
+    merged_result = []
+
+    while i < len(list1) and j < len(list2):
+        key1, value1 = list1[i]
+        key2, value2 = list2[j]
+
+        if int(key1) < int(key2):
+            # If key1 is smaller, move pointer i
+            i += 1
+        elif int(key1) > int(key2):
+            # If key2 is smaller, move pointer j
+            j += 1
+        else:
+            # Keys match: sum numeric values and merge sets
+            merged_value = [
+                value1[0] + value2[0],  # Sum numeric values
+                value1[1].union(value2[1])  # Merge the sets
+            ]
+            merged_result.append([key1, merged_value])
+            i += 1
+            j += 1
+
+    return merged_result
+
+# HELPER FUNCTIONS
+def retrieve_tokenPostings(token):
+    #tokenRange = GTOC.find_toc_range(token)
+
+    with open("ReverseIndex.txt", 'r') as reverseIndex:
+        for fileLine in reverseIndex:
+
+            fileLine = fileLine.strip()
+            currToken = fileLine.split(':')[0].strip()
+
+            if token == currToken:
+                # Safely evaluate the postings string
+                postings = fileLine.split(':')[1].strip()
+                return ast.literal_eval(postings)
+
+    return []  # Return an empty list if token is not found in the reverse index
+
 def getURLs(idList): #NEW
     '''
     Input: Document ID list
@@ -141,8 +155,7 @@ def getURLs(idList): #NEW
         for offset in idList:
             url_collection.seek(int(offset), 0)
             urls.append(url_collection.readline())
-    return URLs
-
+    return urls
 
 def getDocIDs(postings):
     """
