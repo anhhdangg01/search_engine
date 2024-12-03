@@ -84,7 +84,7 @@ def process_query(query: str): #NEW
 
         sorted_data = sorted(mergedList, key=lambda x: x[1][0], reverse=True)#THIS SORTS THE LIST BASED ON CUMLULITIVE TF-IDF
         first_5_keys=[item[0] for item in sorted_data[:min(5, len(sorted_data))]] #GET THE FIRST 5 DOCID on the list, or less if there are less entries. 
-        
+        #first_5_keys=[item[0] for item in sorted_data]
         #print("LEN OF FINAL sorted_data: " + str(len(sorted_data)))
         #print("FIRST 5 KEYS: ")
         #print(first_5_keys)
@@ -94,7 +94,7 @@ def process_query(query: str): #NEW
         print(f"Time taken by merge: {end_timemerge - start_timemerge} seconds")
         end_time = time.time()
         print(f"Total Time taken: {end_time - start_time} seconds")
-        return getURLs(first_5_keys)
+        return getURLs(first_5_keys), (end_time - start_time)
         
 
     else:
@@ -111,16 +111,16 @@ def intersect_sorted_lists(list1, list2): #NEW
         key2, value2 = list2[j]
 
         if int(key1) < int(key2):
-            # If key1 is smaller, move pointer i
+
             i += 1
         elif int(key1) > int(key2):
-            # If key2 is smaller, move pointer j
+
             j += 1
         else:
-            # Keys match: sum numeric values and merge sets
+
             merged_value = [
-                value1[0] + value2[0],  # Sum numeric values
-                value1[1].union(value2[1])  # Merge the sets
+                value1[0] + value2[0], 
+                value1[1].union(value2[1])
             ]
             merged_result.append([key1, merged_value])
             i += 1
@@ -128,22 +128,33 @@ def intersect_sorted_lists(list1, list2): #NEW
 
     return merged_result
 
-# HELPER FUNCTIONS
+
+
 def retrieve_tokenPostings(token):
-    #tokenRange = GTOC.find_toc_range(token)
+    # save the byte offsets
+    tokenRange = GTOC.find_offset(token)
 
-    with open("ReverseIndex.txt", 'r') as reverseIndex:
-        for fileLine in reverseIndex:
+    reverseIndexFolder = "ReverseIndexes"
+    file = os.path.join(reverseIndexFolder, f"{token[0].lower()}.txt")
 
+    with open(file, 'r') as reverseIndex:
+        # seek to starting byte offset
+        reverseIndex.seek(tokenRange[0])
+
+        # read through until reach the end byte offset
+        fileContent = reverseIndex.read(tokenRange[1] - tokenRange[0])
+
+        # iterate until token is found
+        for fileLine in fileContent.splitlines():
             fileLine = fileLine.strip()
+
             currToken = fileLine.split(':')[0].strip()
 
+            # retrieve its postings
             if token == currToken:
-                # Safely evaluate the postings string
                 postings = fileLine.split(':')[1].strip()
                 return ast.literal_eval(postings)
 
-    return []  # Return an empty list if token is not found in the reverse index
 
 def getURLs(idList): #NEW
     '''
