@@ -1,93 +1,77 @@
-import json
 import os
-import re
-from collections import defaultdict
 
-#
-'''
-def group_reverse_index (inputFile = "ReverseIndex.txt"):
-    # grouped token list
-    #groupedIndex = defaultdict(list)
-
-    os.makedirs('TOC', exist_ok=True)
-
-    #open and read line by line
-    with open(inputFile, 'r') as file:
-        for line in file:
-            element = json.loads(line.strip()) 
-
-            for token, values in element.items():
-                tokenLetter = token[0].lower() #First letter
-
-                #write token information into temp file (first letter)
-                tempFileName = f'TOC/{tokenLetter}.txt' 
-                with open (tempFileName, 'a') as tempFile:
-                    tempEntry = json.dumps({token: values})
-                    tempFile.write(tempEntry + "\n")
-
-    #os.makedirs('GroupedReverse.txt')
-
-    #Create output file using GroupedIndex
-    outputFileName = 'GroupedReverse.txt'
-    with open(outputFileName, 'w') as outputFile:
-        for tempLetter in os.listdir('TOC'):
-            tempFileName = f'TOC/{tempLetter}'
+def build_toc():
     
-            with open(tempFileName, 'r') as tempFile:
-                for tokenLine in tempFile:
-                    outputFile.write(tokenLine)
+    # get input and output folders, open each folder in directory, and make a toc for it
 
-    for tempFileName in os.listdir('TOC'):
-        os.remove(f'TOC/{tempFileName}')
-    
-    os.rmdir('TOC')
+    inputFolder = "ReverseIndexes"
+    outputFolder = "TableOfContents"
 
-group_reverse_index()
-'''
+    os.makedirs(outputFolder, exist_ok = True)
 
-def build_toc (inputFile):
-    
-    currLetter = ''
-    startLine = -1
-    lineIndex = 0
-    outputFileName = 'TableOfContents.txt'
-    # Read the input file
-    with open(inputFile, 'r') as inputFile:
-        with open(outputFileName, 'w') as outputFile:
-            for line in inputFile:
-                lineIndex += 1
+    for file in os.listdir(inputFolder):
+        filePath = os.path.join(inputFolder, file)
+        
+        if os.path.isfile(filePath):
+            charName = os.path.splitext(file)[0]
+            outputFileName = os.path.join(outputFolder, f"{charName}_toc.txt")
 
-                token = line.split(':')[0]
-                tokenLetter = token[0].lower()
+            currGroup = ''
+            startByteOffset = -1
+            byteOffset = 0
 
-                if tokenLetter != currLetter:
-                    if currLetter != '':
-                        outputFile.write(f'"{currLetter}": [{startLine}, {lineIndex-1}]\n')
+            # Open the input file for reading and the output file for writing
+            with open(filePath, 'r') as inputFile:
+                with open(outputFileName, 'w') as outputFile:
+                    prevByteOffset = None  # track the previous line's byte offset for the end range
+                    while True:
+                        line = inputFile.readline()
+                        if not line:
+                            break
+                        
+                        # store the current byte offset at the start of the line
+                        byteOffset = inputFile.tell() - len(line)  # get the position at the start of the line
+                        
+                        # split to get the token
+                        token = line.split(':')[0]
+                        tokenGroup = token[:2].lower()  # find the first two letters
+                        
+                        # if the letters have changed
+                        if tokenGroup != currGroup:
+                            if currGroup != '': 
+                                # If it's not the previous group, write the range for the previous group
+                                outputFile.write(f'"{currGroup}": [{startByteOffset}, {prevByteOffset}]\n')
+                            
+                            # Update the current group and start byte offset for the new letter
+                            currGroup = tokenGroup
+                            startByteOffset = byteOffset
+
+                        # for the end range of the current letter
+                        prevByteOffset = byteOffset
                     
-                    currLetter = tokenLetter
-                    startLine = lineIndex
-                    
-            if currLetter != '':
-                outputFile.write(f'"{currLetter}": [{startLine}, {lineIndex}]\n')
+                    # Handle the last group separately
+                    if currGroup != '':
+                        outputFile.write(f'"{currGroup}": [{startByteOffset}, {prevByteOffset}]\n')
 
-
-def find_toc_range(token):
+def find_offset(token):
 
     findLetter = token[0].lower()
-    inputFile = "TableOfContents.txt"
-    startLine = None
-    endLine = None
+    tocFolder = "TableOfContents"
+    tocFile = os.path.join(tocFolder,f"{findLetter}_toc.txt")
+    startOffset = None
+    endOffset = None
 
-    with open(inputFile, 'r') as toc:
+    with open(tocFile, 'r') as toc:
         for line in toc:
-            # Check each line for the corresponding first letter
-            if line.strip().startswith(f'"{findLetter}":'):
-                # Strip down toc formats to get start and ending range
+            # check for corresponding first 2 letters
+            if line.strip().startswith(f'"{token[:2]}":'):
+                # strip down toc formats to get start and ending range
                 rangeString = line.split(':')[1].strip().strip('[]')
-                rangeSplit = range_str.split(',')
-                startLine = int(rangeSplit[0])
-                endLine = int(rangeSplit[1])
+                rangeSplit = rangeString.split(',')
+                
+                startOffset = int(rangeSplit[0])
+                endOffset = int(rangeSplit[1])
                 break
     
-    # Return start and end lines as a list for easy use
-    return [startLine, endLine]
+    # return start and end lines as a list for easy use
+    return [startOffset, endOffset]

@@ -36,6 +36,7 @@ def buildTF_IDF(totalNumDoc):
         totalNumDoc: int -> number of urls that has been processed.
     output:
     '''
+
     with open(os.getcwd() + "/TempFiles/MergedList.txt",'r') as PreProcessedList, open("ReverseIndex.txt",'w') as ReverseIndex:
             wordlist = PreProcessedList.readline().strip()
             while(wordlist):
@@ -53,7 +54,7 @@ def buildTF_IDF(totalNumDoc):
                 wordlist = PreProcessedList.readline()
     
 
-def Archieve_URL(url):
+def Archieve_URL(url, DocumentID):
     '''
     This appends the URL to URL_Collective.txt.
     It creates a history of the processed URL. 
@@ -264,6 +265,7 @@ def merge_files_iteratively(numTempFile):
     print(f"Final merged file: {final_merged_file}")
     os.rename(final_merged_file, tempWorkingDir + "MergedList.txt")
 
+
 def categorizeReverseIndexEntries():
     '''
     This opens the ReverseIndex.txt (the final merged reverse index) and put the entries into a separate file based on the first letter of the token.
@@ -295,6 +297,7 @@ def initialize_Reverse_Index_Process():
     #CALL SIMILARTY FUNCTION HERE:
         #IF SIMILAR continue. 
 
+    
     dir_path = os.getcwd() + "/Sites"
     for root, _, files in os.walk(dir_path):
         for file in files:
@@ -337,6 +340,7 @@ def initialize_Reverse_Index_Process():
     
     totalNumDoc = countNumofDoc()
     buildTF_IDF(totalNumDoc)
+    
     categorizeReverseIndexEntries()
     
 
@@ -359,4 +363,5 @@ def test_one_folder():
                     
 if __name__ == "__main__":
     #test_one_folder
-    initialize_Reverse_Index_Process()
+    #initialize_Reverse_Index_Process()
+    categorizeReverseIndexEntries()
