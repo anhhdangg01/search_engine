@@ -1,57 +1,36 @@
 import os
 
 def build_toc():
-    
-    # get input and output folders, open each folder in directory, and make a toc for it
-
+    # Input and output folders
     inputFolder = "ReverseIndexes"
     outputFolder = "TableOfContents"
 
-    os.makedirs(outputFolder, exist_ok = True)
+    # Ensure the output folder exists
+    os.makedirs(outputFolder, exist_ok=True)
 
     for file in os.listdir(inputFolder):
         filePath = os.path.join(inputFolder, file)
         
         if os.path.isfile(filePath):
-            charName = os.path.splitext(file)[0]
+            charName = os.path.splitext(file)[0]  # Get the character name (e.g., 'a' for 'a.txt')
             outputFileName = os.path.join(outputFolder, f"{charName}_toc.txt")
 
-            currGroup = ''
-            startByteOffset = -1
-            byteOffset = 0
-
-            # Open the input file for reading and the output file for writing
-            with open(filePath, 'r') as inputFile:
-                with open(outputFileName, 'w') as outputFile:
-                    prevByteOffset = None  # track the previous line's byte offset for the end range
-                    while True:
-                        line = inputFile.readline()
-                        if not line:
-                            break
-                        
-                        # store the current byte offset at the start of the line
-                        byteOffset = inputFile.tell() - len(line)  # get the position at the start of the line
-                        
-                        # split to get the token
-                        token = line.split(':')[0]
-                        tokenGroup = token[:2].lower()  # find the first two letters
-                        
-                        # if the letters have changed
-                        if tokenGroup != currGroup:
-                            if currGroup != '': 
-                                # If it's not the previous group, write the range for the previous group
-                                outputFile.write(f'"{currGroup}": [{startByteOffset}, {prevByteOffset}]\n')
-                            
-                            # Update the current group and start byte offset for the new letter
-                            currGroup = tokenGroup
-                            startByteOffset = byteOffset
-
-                        # for the end range of the current letter
-                        prevByteOffset = byteOffset
+            # Open the reverse index file and the corresponding TOC output file
+            with open(filePath, 'r') as inputFile, open(outputFileName, 'w') as outputFile:
+                while True:
+                    # Get the current byte offset
+                    byteOffset = inputFile.tell()
                     
-                    # Handle the last group separately
-                    if currGroup != '':
-                        outputFile.write(f'"{currGroup}": [{startByteOffset}, {prevByteOffset}]\n')
+                    # Read the next line
+                    line = inputFile.readline()
+                    if not line:  # End of file
+                        break
+                    
+                    # Extract the token (everything before the ':')
+                    token = line.split(':', 1)[0].strip()
+                    
+                    # Write the token and its byte offset to the TOC
+                    outputFile.write(f'{token}:{byteOffset}\n')
 
 def find_offset(token):
 
@@ -75,3 +54,23 @@ def find_offset(token):
     
     # return start and end lines as a list for easy use
     return [startOffset, endOffset]
+
+
+def preload_toc():
+    tocFolder="TableOfContents"
+    globalTOC = {}
+
+    for file in os.listdir(tocFolder):
+        if file.endswith("_toc.txt"):
+            charName = file[0].lower()  # Extract the first character (e.g., 'a', 'b')
+            filePath = os.path.join(tocFolder, file)
+
+            # Initialize the nested dictionary for the character
+            globalTOC[charName] = {}
+
+            with open(filePath, 'r') as tocFile:
+                for line in tocFile:
+                    token, offset = line.strip().split(':')
+                    globalTOC[charName][token] = int(offset)
+
+    return globalTOC
