@@ -54,7 +54,7 @@ def buildTF_IDF(totalNumDoc):
                 wordlist = PreProcessedList.readline()
     
 
-def Archieve_URL(url, DocumentID):
+def Archieve_URL(url):
     '''
     This appends the URL to URL_Collective.txt.
     It creates a history of the processed URL. 
@@ -335,13 +335,14 @@ def initialize_Reverse_Index_Process():
     #GTOC.group_reverse_index()
     
     
-    GTOC.build_toc(os.getcwd() + "/TempFiles/MergedList.txt")
+    
 
     
     totalNumDoc = countNumofDoc()
     buildTF_IDF(totalNumDoc)
     
     categorizeReverseIndexEntries()
+    GTOC.build_toc()
     
 
 
@@ -364,4 +365,4 @@ def test_one_folder():
 if __name__ == "__main__":
     #test_one_folder
     #initialize_Reverse_Index_Process()
-    categorizeReverseIndexEntries()
+    GTOC.build_toc()
