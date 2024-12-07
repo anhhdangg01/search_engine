@@ -6,8 +6,15 @@ import ast
 import helper_functions as hf
 import time
 import datetime
+import bisect
+import mmap
+
+global_toc = GTOC.preload_toc()
+reverse_index_cache = {}
+
 
 # VARIABLES
+
 stop_words = [
     "a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any", "are", "arent", "as", "at",
     "be", "because", "been", "before", "being", "below", "between", "both", "but", "by", "cant", "cannot", "could",
@@ -25,8 +32,9 @@ stop_words = [
     "youd", "youll", "youre", "youve", "your", "yours", "yourself", "yourselves"
     ]
 
-# MAIN FUNCTIONS
+
 def process_query(query: str): #NEW
+    #global listOlists
     start_time = time.time()
     """
     Uses the given AND boolean query in order to search for the top 5 related URLs.
@@ -44,22 +52,49 @@ def process_query(query: str): #NEW
         t = t.translate(hf.punctuation_table)
         t = t.lower()
         t = hf.porter_stemmer(t)
-        if t in stop_words:
-            continue
-        tokens.append(t)
+        #if t in stop_words:
+        #    continue
+        if t not in tokens and len(tokens) <= 60:
+            tokens.append(t)
+        #tokens.append(t)
     #print(tokens)
     
     listOlists = []
-    
+    '''
+    Director = []
+    start_time1 = time.time()
     for token in tokens:
-        start_time1 = time.time()
-        tokenPostings = retrieve_tokenPostings(token)
-        end_time2 = time.time()
-        print(f"Time taken by retrieve_tokenPostings: {end_time2 - start_time1} seconds")
+        thread = threading.Thread(target=postingsRetrievalThread, args=(token,))
+        Director.append(thread)
 
+    # Start threads
+    for thread in Director:
+        thread.start()
 
-        if(tokenPostings!=[]):
+    # Wait for all threads to complete
+    for thread in Director:
+        thread.join()
+    
+
+    end_time2 = time.time()
+    print(f"Time taken by retrieve_tokenPostings: {end_time2 - start_time1} seconds")
+
+        #print(tokenPostings)
+
+    #print(listOlists)
+    #start_timemerge = time.time()
+    '''
+    
+    start_time1 = time.time()
+    for token in tokens:
+
+        tokenPostings = retrieve_tokenPostings(token, global_toc)
+        if(tokenPostings!=[] and tokenPostings is not None):
             listOlists.append(tokenPostings)
+
+    end_time2 = time.time()
+    print(f"Time taken by retrieve_tokenPostings: {end_time2 - start_time1} seconds")
+    
 
     start_timemerge = time.time()
 
@@ -70,37 +105,34 @@ def process_query(query: str): #NEW
 
 
     if(len(listOlists)>0):
-        mergedList = listOlists[-1]
+        mergedList = listOlists[-1][:min(100,len(listOlists[-1]))]
         listOlists.pop()
 
         #print("LEN OF LIST: " + str(len(listOlists)))
 
         for list in reversed(listOlists):
-            mergedList = intersect_sorted_lists(mergedList,list)
+            templist = list[:min(len(list),100)]
+            mergedList = intersect_sorted_lists(mergedList,templist)
             #print("LEN OF mergedList: " + str(len(mergedList)))
 
         #print("LEN OF FINAL MergedList: " + str(len(mergedList)))
 
 
         sorted_data = sorted(mergedList, key=lambda x: x[1][0], reverse=True)#THIS SORTS THE LIST BASED ON CUMLULITIVE TF-IDF
-        first_5_keys=[item[0] for item in sorted_data[:min(5, len(sorted_data))]] #GET THE FIRST 5 DOCID on the list, or less if there are less entries. 
-        #first_5_keys=[item[0] for item in sorted_data]
-        #print("LEN OF FINAL sorted_data: " + str(len(sorted_data)))
-        #print("FIRST 5 KEYS: ")
-        #print(first_5_keys)
+        urlOffsets=[item[0] for item in sorted_data] #GET THE DOCID on the list
 
 
         end_timemerge = time.time()
         print(f"Time taken by merge: {end_timemerge - start_timemerge} seconds")
         end_time = time.time()
         print(f"Total Time taken: {end_time - start_time} seconds")
-        return getURLs(first_5_keys), (end_time - start_time)
+        return getURLs(urlOffsets), (end_time - start_time)
         
 
     else:
         return[]
 
-def intersect_sorted_lists(list1, list2): #NEW
+def intersect_sorted_lists(list1, list2):
     i, j = 0, 0
     merged_result = []
 
@@ -108,50 +140,61 @@ def intersect_sorted_lists(list1, list2): #NEW
         key1, value1 = list1[i]
         key2, value2 = list2[j]
 
-        if int(key1) < int(key2):
+        key1_int = int(key1)
+        key2_int = int(key2)
 
+        if key1_int < key2_int:
+            merged_result.append(list1[i])
             i += 1
-        elif int(key1) > int(key2):
-
+        elif key1_int > key2_int:
+            merged_result.append(list2[j])
             j += 1
         else:
 
             merged_value = [
                 value1[0] + value2[0], 
-                value1[1].union(value2[1])
+                set(value1[1]).union(value2[1])  
             ]
             merged_result.append([key1, merged_value])
             i += 1
             j += 1
 
+    if i < len(list1):
+        merged_result.extend(list1[i:])
+    if j < len(list2):
+        merged_result.extend(list2[j:])
+
     return merged_result
 
 
 
-def retrieve_tokenPostings(token):
-    # save the byte offsets
-    tokenRange = GTOC.find_offset(token)
+def retrieve_tokenPostings(token, global_toc):
+    reverseIndexFolder="ReverseIndexes"
+    charName = token[0].lower()  # Find the designated char and File
 
-    reverseIndexFolder = "ReverseIndexes"
-    file = os.path.join(reverseIndexFolder, f"{token[0].lower()}.txt")
+    charTOC = global_toc[charName]
 
-    with open(file, 'r') as reverseIndex:
-        # seek to starting byte offset
-        reverseIndex.seek(tokenRange[0])
 
-        # read through until reach the end byte offset
-        fileContent = reverseIndex.read(tokenRange[1] - tokenRange[0])
+    if token not in charTOC:
+        return []  # Return empty if token doesn't exist
 
-        # iterate until token is found
-        for fileLine in fileContent.splitlines():
-            fileLine = fileLine.strip()
+# Saves the byte offset
+    byteOffset = charTOC[token]
 
-            currToken = fileLine.split(':')[0].strip()
+    # Get the postings using offset
+    reverseIndexFile = os.path.join(reverseIndexFolder, f"{charName}.txt")
+    with open(reverseIndexFile, 'r') as reverseIndex:
+        reverseIndex.seek(byteOffset)
+        line = reverseIndex.readline()
+        line = line.strip()
 
-            # retrieve its postings
-            if token == currToken:
-                postings = fileLine.split(':')[1].strip()
-                return ast.literal_eval(postings)
+        # Extract the token and postings
+        currToken, postings = line.split(':', 1)
+        if currToken == token:
+                postings = postings.replace("'", '"').replace("{", "[").replace("}", "]")
+                return json.loads(postings) # Convert postings to a Python object
+
+    return []  # Token not found in the file
 
 
 def getURLs(idList): #NEW
