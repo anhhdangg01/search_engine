@@ -16,16 +16,9 @@ if __name__ == '__main__':
     root = tk.Tk()
     
 
-
-
-
-
-
     root.title("Search Engine")
     root.geometry("1024x480")
     root.configure(bg='#000000')
-
-
 
     back_frame = tk.Frame(root,bg='#2c2e30')
     back_frame.pack(fill="both", expand=True)

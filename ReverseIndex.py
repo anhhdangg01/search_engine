@@ -292,11 +292,7 @@ def initialize_Reverse_Index_Process():
     global tempIndex
     global numTempFile
     DocumentID = 0
-    tokens = [] #remove this comment
-
-    #CALL SIMILARTY FUNCTION HERE:
-        #IF SIMILAR continue. 
-
+    tokens = []
     
     dir_path = os.getcwd() + "/Sites"
     for root, _, files in os.walk(dir_path):
@@ -309,9 +305,6 @@ def initialize_Reverse_Index_Process():
                         data = json.load(f)
                         url = hf.defrag_url(data.get("url"))
                         tokens = hf.extract_tokenize_fields(data)
-
-                        #CALL SIMILARTY FUNCTION HERE:
-                            #IF SIMILAR continue. 
                         
                         DocumentID = Archieve_URL(url)
                         CreateIndex(DocumentID, list(tokens.items()))
@@ -333,21 +326,13 @@ def initialize_Reverse_Index_Process():
     countTokens()
     #recursiveMerge() #:( SAD CODE RIGHT HERE <-
     #GTOC.group_reverse_index()
-    
-    
-    
 
-    
     totalNumDoc = countNumofDoc()
     buildTF_IDF(totalNumDoc)
     
     categorizeReverseIndexEntries()
     GTOC.build_toc()
     
-
-
-
-
 def test_one_folder():
     curdir = os.getcwd()
     target = os.path.join(curdir, "DEV", "aiclub_ics_uci_edu")
@@ -360,9 +345,9 @@ def test_one_folder():
                     x = hf.extract_tokenize_fields(data)
                     #text = hf.extract_text(data)
                     #token_dict = hf.tokenizer(text)
-
                     
 if __name__ == "__main__":
     #test_one_folder
     #initialize_Reverse_Index_Process()
-    GTOC.build_toc()
+    #GTOC.build_toc()
+    pass
