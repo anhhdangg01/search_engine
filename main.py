@@ -68,7 +68,6 @@ if __name__ == '__main__':
 
             resultList.config(height=50)
         except:
-            print("ERROR OCCURRED")
             for i in range(listlen):
                 resultList.delete(0)
             listlen = 0
