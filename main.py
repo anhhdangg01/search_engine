@@ -1,8 +1,3 @@
-# This is a sample Python script.
-
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-
 import tkinter as tk
 from tkinter import ttk
 from PIL import ImageTk, Image
@@ -14,7 +9,6 @@ listlen = 0
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     root = tk.Tk()
-    
 
     root.title("Search Engine")
     root.geometry("1024x480")
@@ -25,9 +19,7 @@ if __name__ == '__main__':
     back_frame.grid_rowconfigure(1)  # Allow row 1 to expand
     back_frame.grid_rowconfigure(2)  # Allow row 2 to expand
     back_frame.grid_columnconfigure(0, weight=1)
-
-
-
+    
     img = Image.open(os.getcwd() + "\\web-search-engine_8346083.png")
     img = img.resize((100, 100))
     img_tk = ImageTk.PhotoImage(img)
@@ -36,7 +28,6 @@ if __name__ == '__main__':
     # Display the image in a Label
     label.config(image=img_tk)
     label.image = img_tk
-
 
     time_frame = tk.Frame(back_frame,bg='#2c2e30',width=5, height=5,)
     time_frame.grid(row=1,column=0,sticky="nsew",pady=(0,3),padx=80)
@@ -47,11 +38,6 @@ if __name__ == '__main__':
 
     bottom_frame = tk.Frame(back_frame,bg='#2c2e30')
     bottom_frame.grid(row=2,column=0,sticky="nsew",pady=(0,10),padx=80)
-
-
-
-
-
 
     customFont = font.Font(family="Arial", size=20, weight="bold")
     search_frame = tk.Frame(bottom_frame)
@@ -68,12 +54,9 @@ if __name__ == '__main__':
 
     def startSearch(bottom_frame):
         global listlen
-
+        timeCounter = 0
         try:
             itemList, timeCounter = RM.process_query(str(search_box.get("1.0",tk.END)))
-
-            
-
             for i in range(listlen):
                 resultList.delete(0)
             
@@ -84,14 +67,11 @@ if __name__ == '__main__':
                 resultList.insert(tk.END,itemList[i])
 
             resultList.config(height=50)
-        except():
+        except:
+            print("ERROR OCCURRED")
             for i in range(listlen):
                 resultList.delete(0)
             listlen = 0
             timeTakenText.config(text = "No results found.")
-
-
-
-
 
     root.mainloop()
