@@ -12,7 +12,11 @@ import mmap
 global_toc = GTOC.preload_toc()
 reverse_index_cache = {}
 
+
 # VARIABLES
+
+
+
 
 def process_query(query: str): #NEW
     #global listOlists
@@ -33,7 +37,7 @@ def process_query(query: str): #NEW
         t = t.translate(hf.punctuation_table)
         t = t.lower()
         t = hf.porter_stemmer(t)
-        if t not in tokens and len(tokens) <= 45:
+        if t not in tokens and len(tokens) <= 20:
             tokens.append(t)
 
     
