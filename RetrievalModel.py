@@ -2,12 +2,17 @@
 import os
 import json
 import groupingTOC as GTOC
+import ast
 import helper_functions as hf
 import time
+import datetime
+import bisect
+import mmap
 
 global_toc = GTOC.preload_toc()
+reverse_index_cache = {}
 
-# FUNCTS
+# VARIABLES
 
 def process_query(query: str): #NEW
     #global listOlists
@@ -28,9 +33,9 @@ def process_query(query: str): #NEW
         t = t.translate(hf.punctuation_table)
         t = t.lower()
         t = hf.porter_stemmer(t)
-
-        if len(tokens) <= 45:
+        if t not in tokens and len(tokens) <= 45:
             tokens.append(t)
+
     
     listOlists = []
     
@@ -49,15 +54,21 @@ def process_query(query: str): #NEW
 
     listOlists.sort(key=len,reverse=True)
 
+
+
+
     if(len(listOlists)>0):
         mergedList = listOlists[-1][:min(100,len(listOlists[-1]))]
         listOlists.pop()
+
 
         for list in reversed(listOlists):
             templist = list[:min(len(list),100)]
             mergedList = intersect_sorted_lists(mergedList,templist)
 
-        sorted_data = sorted(mergedList, key=lambda x: x[1][0], reverse=True) #THIS SORTS THE LIST BASED ON CUMLULITIVE TF-IDF
+
+
+        sorted_data = sorted(mergedList, key=lambda x: x[1][0], reverse=True)#THIS SORTS THE LIST BASED ON CUMLULITIVE TF-IDF
         urlOffsets=[item[0] for item in sorted_data] #GET THE DOCID on the list
 
 
@@ -67,6 +78,7 @@ def process_query(query: str): #NEW
         print(f"Total Time taken: {end_time - start_time} seconds")
         return getURLs(urlOffsets), (end_time - start_time)
         
+
     else:
         return[]
 
@@ -116,7 +128,7 @@ def retrieve_tokenPostings(token, global_toc):
     if token not in charTOC:
         return []  # Return empty if token doesn't exist
 
-# Saves the byte offset
+    # Saves the byte offset
     byteOffset = charTOC[token]
 
     # Get the postings using offset
@@ -148,11 +160,4 @@ def getURLs(idList): #NEW
     return urls
 
 if __name__ == "__main__":
-    #test_postings = [[123, [5.4, {'p', 'td'}]], [12314, [1.45, {'h1'}]], [3232, [2.2, {'p', 'strong'}]], [51, [3, {'title'}]], [3222, [2, {'p'}]]]
-    #test_postings2 = ["cristal:[['27477', [8.75, {'p'}]]]", "crista:[['16903', [2.63, {'td'}]], ['16994', [2.63, {'h2'}]], ['19264', [2.63, {'p'}]], ['19419', [2.63, {'p'}]], ['19434', [2.63, {'p'}]], ['19460', [2.63, {'p'}]], ['21216', [2.63, {'li'}]], ['21222', [3.42, {'p'}]], ['21245', [3.42, {'p'}]], ['21399', [2.63, {'p'}]], ['21815', [5.14, {'p'}]], ['23073', [5.72, {'title', 'p', 'h3'}]], ['23387', [2.63, {'td'}]], ['24237', [3.42, {'p'}]], ['24569', [5.64, {'title', 'p', 'h3'}]], ['24650', [4.47, {'strong', 'p'}]], ['24822', [4.47, {'p'}]], ['25756', [2.63, {'li'}]], ['27066', [3.88, {'td', 'p'}]], ['27525', [3.42, {'td', 'p'}]], ['28112', [4.47, {'strong', 'p'}]], ['28262', [4.21, {'p'}]], ['28981', [5.47, {'p'}]], ['29118', [3.42, {'td', 'p'}]], ['29568', [4.21, {'p'}]], ['29691', [5.86, {'strong', 'p'}]], ['33348', [3.42, {'td'}]], ['33358', [5.72, {'title', 'p', 'h3'}]], ['33843', [3.42, {'h2', 'li'}]], ['34250', [5.64, {'title', 'p', 'h3'}]], ['34410', [3.42, {'td', 'p'}]], ['34683', [3.42, {'td', 'p'}]], ['34853', [4.21, {'li', 'p'}]], ['35143', [3.42, {'h2', 'li'}]], ['35147', [2.63, {'title'}]], ['36889', [3.88, {'strong', 'p'}]], ['37703', [3.88, {'td', 'p'}]], ['38521', [2.63, {'td'}]], ['40527', [3.42, {'p'}]], ['40849', [3.88, {'td', 'li', 'p'}]], ['41564', [5.64, {'p'}]], ['42502', [4.47, {'p'}]], ['43011', [4.21, {'p'}]], ['43460', [4.47, {'p'}]], ['43885', [4.21, {'p'}]], ['45012', [5.93, {'p'}]], ['45290', [5.0, {'p'}]], ['45368', [5.47, {'p'}]], ['45421', [3.88, {'p'}]], ['45620', [4.21, {'strong', 'p'}]], ['45779', [4.47, {'strong', 'p'}]], ['45815', [4.47, {'p'}]], ['45957', [5.47, {'p'}]], ['46563', [2.63, {'td'}]], ['47302', [2.63, {'p'}]], ['47928', [3.42, {'td', 'p'}]], ['48947', [5.0, {'strong', 'p'}]], ['49912', [4.68, {'strong', 'p'}]], ['50020', [5.0, {'p'}]], ['52944', [3.42, {'em', 'p'}]], ['53787', [3.42, {'strong', 'p'}]], ['53796', [3.42, {'strong', 'p'}]], ['53837', [3.42, {'strong', 'p'}]], ['53873', [2.63, {'li'}]], ['53875', [3.42, {'strong', 'p'}]], ['53999', [3.42, {'td'}]], ['54045', [2.63, {'p'}]], ['54692', [2.63, {'p'}]], ['54914', [2.63, {'p'}]]]]"
-    # print(process_query("This is a test"))
-    #print(f"Here is the {process_query('cristina lopes')}")
-    #print(f"Here is the {process_query('machine learning')}")
-    #print(f"Here is the {process_query('acm')}")
-    #print(f"Here is the {process_query('master of software engineering')}")
     pass
